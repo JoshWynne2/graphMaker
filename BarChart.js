@@ -6,17 +6,16 @@ class BarChart {
 			type is an ENUM of the following combination of names as strings:
 				vertical/horizontal
 				group/stacked
-				this.d/100%
+				scaled/100%
 
 			this is the default set:
-				["vertical", "cascade", "this.d"]
+				["vertical", "stacked", "scaled"]
 
 			if type.includes("vertical"){
 				default
 			} else {
 				blow your head off
 			}
-
 		*/
 
 		this.yValue = obj.yValue;
@@ -43,8 +42,18 @@ class BarChart {
 		this.labels = this.data.map((d) => d[this.xValue]);
 
 		this.dataMax = 0;
+		this.dataMaxs = [];
+
+		this.gap = 0;
 		for (let i = 0; i < this.yValue.length; i++) {
-			this.dataMax += max(this.data.map((row) => +row[this.yValue[i]]));
+			this.dataMaxs.push(max(this.data.map((row) => +row[this.yValue[i]])));
+		}
+
+		if (this.type.includes("grouped")) {
+			this.dataMax = max(this.dataMaxs);
+		} else {
+			// sum of everything in the array, there are some cases i can see this being bad?
+			this.dataMax = this.dataMaxs.reduce((e, x) => e + x, 0);
 		}
 
 		// increases datamax so its divisable by the tick increment
@@ -52,7 +61,7 @@ class BarChart {
 
 		this.scale;
 
-		if(this.type.includes("100%")){
+		if (this.type.includes("100%")) {
 			this.adjDataMax = 100;
 		}
 
@@ -147,10 +156,10 @@ class BarChart {
 		line(0, 0, this.chartWidth, 0);
 
 		//calculate gap
-		let gap = this.calculateGap();
+		this.gap = this.calculateGap();
 
 		push();
-		this.renderBars(gap);
+		this.renderBars(this.gap);
 		pop();
 
 		this.renderTicks();
@@ -159,82 +168,146 @@ class BarChart {
 	}
 
 	calculateGap() {
-		if (this.type.includes("horizontal")) {
-			return (
-				(this.chartHeight - this.data.length * this.barWidth) /
-				(this.data.length + 1)
-			);
-		}
 		// default vertical
-		return (
-			(this.chartWidth - this.data.length * this.barWidth) / (this.data.length + 1)
-		);
+		let gap =
+			(this.chartWidth - this.data.length * this.barWidth) / (this.data.length + 1);
+
+		if (this.type.includes("grouped")) {
+			gap =
+				(this.chartWidth -
+					this.barWidth * this.yValue.length * this.data.length) /
+				(this.data.length + 1);
+		}
+
+		if (this.type.includes("horizontal")) {
+			gap =
+				(this.chartHeight - this.data.length * this.barWidth) /
+				(this.data.length + 1);
+
+			if (this.type.includes("grouped")) {
+				gap =
+					(this.chartHeight -
+						this.data.length * (this.barWidth * this.yValue.length)) /
+					(this.data.length + 1);
+			}
+		}
+
+		if (gap < 0) {
+			gap = 0;
+		}
+		return gap;
 	}
 
 	renderBars(gap) {
-		if (this.type.includes("horizontal")) {
-			translate(0, -gap - this.barWidth);
+		// first gap
+		if (this.type.includes("grouped")) {
+			if (this.type.includes("horizontal")) {
+				translate(
+					0,
+					(-gap - this.barWidth * this.yValue.length) / 2 - this.barWidth
+				);
+			} else {
+				translate((gap + this.barWidth * this.yValue.length) / 2, 0);
+			}
 		} else {
-			translate((gap + this.barWidth) / 2, 0);
+			if (this.type.includes("horizontal")) {
+				translate(0, (-gap - this.barWidth) / 2);
+			} else {
+				translate((gap + this.barWidth) / 2, 0);
+			}
 		}
-
+		// loop on rows
 		for (let i = 0; i < this.data.length; i++) {
 			// draw bar
 			push();
 
+			// calculate barMax
 			let barMax = 0;
-			if(this.type.includes("100%")){
-				// calculate barMax
+			if (this.type.includes("100%")) {
 				for (let j = 0; j < this.yValue.length; j++) {
 					let barvalue = this.data[i][this.yValue[j]];
 					barMax += +barvalue;
 				}
 			}
 
+			// loop on values
 			for (let j = 0; j < this.yValue.length; j++) {
+				// calculate barheight
 				let barHeight = this.data[i][this.yValue[j]] * this.scale;
-				/*
-					if its a 100% chart,
-					barheight = barmax/yvalue * scale
 
-				*/
-				if(this.type.includes("100%")){
-					barHeight = this.data[i][this.yValue[j]]/barMax * 100 * this.scale 
+				if (this.type.includes("100%")) {
+					barHeight =
+						(this.data[i][this.yValue[j]] / barMax) * 100 * this.scale;
 				}
 
 				fill(this.barColours[j]);
 				noStroke();
-				if (this.type.includes("horizontal")) {
-					rect(0, 0, barHeight, this.barWidth);
-					translate(barHeight, 0);
+
+				// draw rectangle and move for stacked/group
+				if (this.type.includes("grouped")) {
+					if (this.type.includes("horizontal")) {
+						rect(0, 0, barHeight, this.barWidth);
+						translate(0, this.barWidth);
+					} else {
+						rect(0, 0, this.barWidth, -barHeight);
+						translate(this.barWidth, 0);
+					}
 				} else {
-					rect(0, 0, this.barWidth, -barHeight);
-					translate(0, -barHeight);
+					if (this.type.includes("horizontal")) {
+						rect(0, 0, barHeight, this.barWidth);
+						translate(barHeight, 0);
+					} else {
+						rect(0, 0, this.barWidth, -barHeight);
+						translate(0, -barHeight);
+					}
 				}
 			}
 			pop();
 
-			// draw label
 			push();
 
+			// draw label
 			this.renderLabel(i);
 
 			pop();
-			if (this.type.includes("horizontal")) {
-				translate(0, -gap - this.barWidth);
+
+			// move for next category
+			if (this.type.includes("grouped")) {
+				if (this.type.includes("horizontal")) {
+					translate(0, -gap - this.barWidth * this.yValue.length);
+				} else {
+					translate(gap + this.barWidth * this.yValue.length, 0);
+				}
 			} else {
-				translate(gap + this.barWidth, 0);
+				if (this.type.includes("horizontal")) {
+					translate(0, -gap - this.barWidth);
+				} else {
+					translate(gap + this.barWidth, 0);
+				}
 			}
 		}
 	}
 
 	renderLabel(i) {
-		if(this.type.includes("horizontal")){
-			translate(this.barWidth / 2 - this.labelPadding, this.barWidth/2);
-			textAlign(RIGHT);
+		if (this.type.includes("grouped")) {
+			if (this.type.includes("horizontal")) {
+				translate(
+					(this.barWidth * this.yValue.length) / 2 - this.labelPadding,
+					(this.barWidth * this.yValue.length) / 2
+				);
+				textAlign(RIGHT);
+			} else {
+				translate((this.barWidth * this.yValue.length) / 2, this.labelPadding);
+				textAlign(LEFT);
+			}
 		} else {
-			translate(this.barWidth / 2, this.labelPadding);
-			textAlign(LEFT);
+			if (this.type.includes("horizontal")) {
+				translate(this.barWidth / 2 - this.labelPadding, this.barWidth / 2);
+				textAlign(RIGHT);
+			} else {
+				translate(this.barWidth / 2, this.labelPadding);
+				textAlign(LEFT);
+			}
 		}
 
 		textSize(this.labelTextSize);
