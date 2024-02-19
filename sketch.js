@@ -23,7 +23,7 @@ function setup() {
 
 	let barChart01 = {
 		data: cleanData,
-		horizontal: true,
+		horizontal: false,
 		yValue: "Total",
 		xValue: "Age_Group",
 		chartWidth: 400,
@@ -35,7 +35,7 @@ function setup() {
 		axisLineColour: "#0000ff",
 		labelTextSize: 20,
 		labelPadding: 10,
-		labelRotation: 45,
+		labelRotation: 90,
 		labelColour: "#000000",
 	};
 

@@ -1,7 +1,15 @@
 class BarChart {
 	constructor(obj, dev = false) {
 		this.data = obj.data;
-		this.horizontal = obj.horizontal;
+		this.type = obj.type;
+		/*
+			type is an ENUM of the following combination of names as strings:
+				vertical
+				horizontal
+
+				100%
+
+		*/
 
 		this.yValue = obj.yValue;
 		this.xValue = obj.xValue;
@@ -19,8 +27,13 @@ class BarChart {
 		this.labelRotation = obj.labelRotation;
 		this.labelColour = obj.labelColour;
 
+		this.tickIncrement = 5;
+
 		this.labels = this.data.map((d) => d[this.xValue]);
 		this.dataMax = max(this.data.map((row) => +row[this.yValue]));
+
+		// increases datamax so its divisable by the tick increment
+		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
 
 		if (dev) {
 			this.dev = true;
@@ -66,11 +79,14 @@ class BarChart {
 					labelColour: "replace",
 				};
 
-				var element = document.createElement('a');
-				element.setAttribute('href', 'data:application/json;,' + JSON.stringify(save));
-				element.setAttribute('download', "template.json");
+				var element = document.createElement("a");
+				element.setAttribute(
+					"href",
+					"data:application/json;," + JSON.stringify(save)
+				);
+				element.setAttribute("download", "template.json");
 
-				element.style.display = 'none';
+				element.style.display = "none";
 				document.body.appendChild(element);
 
 				element.click();
@@ -81,11 +97,21 @@ class BarChart {
 		}
 	}
 
+	calcAdjDataMax(max, inc){
+		while(max % inc != 0){
+			max++;
+		}
+		return max;
+	}
+
 	render() {
 		// render sliders if dev mode
 		if (this.dev) this.renderSettings();
 
+
 		push();
+
+		// change orgin to 0,0 of the graph
 		translate(this.xPos, this.yPos);
 
 		// draw axis lines
@@ -94,88 +120,72 @@ class BarChart {
 		line(0, 0, this.chartWidth, 0);
 
 		//calculate gap
+		let gap = this.calculateGap();
+
+		push();
+		this.renderBars(gap);
+		pop();
+
+		this.renderTicks();
+		pop();
+	}
+
+	calculateGap() {
 		let gap =
 			(this.chartWidth - this.data.length * this.barWidth) / (this.data.length + 1);
-		push();
 
-		if (this.horizontal) {
-			textAlign(RIGHT, CENTER);
-			gap =
-				(this.chartHeight - this.data.length * this.barWidth) /
-				(this.data.length + 1);
+		return gap;
+	}
 
-			translate(0, -gap - this.barWidth);
-		} else {
-			translate(gap, 0);
-		}
+	renderBars(gap) {
+		translate((gap + this.barWidth) / 2, 0);
 
+		let scale = this.chartHeight / this.adjDataMax;
 		for (let i = 0; i < this.data.length; i++) {
-			let scale = this.chartHeight / this.dataMax;
+
 			let barHeight = this.data[i][this.yValue] * scale;
 
 			// draw bar
 			fill(this.barColour);
-			if (this.horizontal) {
-				rect(0, 0, barHeight, this.barWidth);
-			} else {
-				rect(0, 0, this.barWidth, -barHeight);
-			}
+			rect(0, 0, this.barWidth, -barHeight);
 
 			// draw label
 			push();
 
-			translate(this.barWidth / 2, this.labelPadding);
-
-			textSize(this.labelTextSize);
-			fill(this.labelColour);
-			noStroke();
-			if (this.horizontal) {
-				rotate(-this.labelRotation);
-				text(this.labels[i], -20, 0);
-			} else {
-				rotate(this.labelRotation);
-				text(this.labels[i], 0, 0);
-			}
+			this.renderLabel(i);
 
 			pop();
-
-			if (this.horizontal) {
-				translate(0, -gap - this.barWidth);
-			} else {
-				translate(gap + this.barWidth, 0);
-			}
+			translate(gap + this.barWidth, 0);
 		}
-		pop();
+	}
 
-		// draw vertical elements
-		// line(0, 0, -20, 0);
-		// line(0, -20, -20, -20);
-		// line(0, -40, -20, -40);
+	renderLabel(i) {
+		translate(this.barWidth / 2, this.labelPadding);
 
-		let tickGap = this.chartHeight / 5;
-		let tickIncrement = this.dataMax / 5;
-		for (let i = 0; i <= 5; i++) {
+		textSize(this.labelTextSize);
+		fill(this.labelColour);
+		noStroke();
+
+		textAlign(LEFT);
+		rotate(this.labelRotation);
+		text(this.labels[i], 0, 0);
+	}
+
+	renderTicks() {
+		let tickCount = this.adjDataMax / this.tickIncrement
+		let tickGap = this.chartHeight / tickCount;
+
+		for (let i = 0; i <= tickCount; i++) {
 			stroke(0);
 
-			if (this.horizontal) {
-				line(tickGap * i, 0, tickGap * i, 20);
-			} else {
-				line(0, -tickGap * i, -20, -tickGap * i);
-			}
+			line(0, -tickGap * i, -20, -tickGap * i);
 
 			textSize(this.labelTextSize);
 			fill(this.labelColour);
 			noStroke();
-			if (this.horizontal) {
-				textAlign(CENTER, TOP);
-				text((tickIncrement * i).toFixed(0), tickGap * i, 20);
-			} else {
-				textAlign(RIGHT, CENTER);
-				text((tickIncrement * i).toFixed(2), -20, -tickGap * i);
-			}
+			textAlign(RIGHT, CENTER);
+			text((this.tickIncrement * i), -25, -tickGap * i);
 		}
-
-		pop();
 	}
 
 	renderSettings() {
