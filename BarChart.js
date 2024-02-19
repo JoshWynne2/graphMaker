@@ -37,7 +37,7 @@ class BarChart {
 		this.labelRotation = obj.labelRotation;
 		this.labelColour = obj.labelColour;
 
-		this.tickIncrement = 5;
+		this.tickIncrement = obj.tickIncrement;
 		this.legendSize = obj.legendSize;
 
 		this.labels = this.data.map((d) => d[this.xValue]);
@@ -51,6 +51,10 @@ class BarChart {
 		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
 
 		this.scale;
+
+		if(this.type.includes("100%")){
+			this.adjDataMax = 100;
+		}
 
 		if (dev) {
 			this.dev = true;
@@ -177,8 +181,26 @@ class BarChart {
 		for (let i = 0; i < this.data.length; i++) {
 			// draw bar
 			push();
+
+			let barMax = 0;
+			if(this.type.includes("100%")){
+				// calculate barMax
+				for (let j = 0; j < this.yValue.length; j++) {
+					let barvalue = this.data[i][this.yValue[j]];
+					barMax += +barvalue;
+				}
+			}
+
 			for (let j = 0; j < this.yValue.length; j++) {
 				let barHeight = this.data[i][this.yValue[j]] * this.scale;
+				/*
+					if its a 100% chart,
+					barheight = barmax/yvalue * scale
+
+				*/
+				if(this.type.includes("100%")){
+					barHeight = this.data[i][this.yValue[j]]/barMax * 100 * this.scale 
+				}
 
 				fill(this.barColours[j]);
 				noStroke();

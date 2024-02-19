@@ -23,8 +23,8 @@ function setup() {
 
 	let barChart01 = {
 		data: cleanData,
-		type: ["vertical", "stacked", "scaled"],
-		yValue: ["Total"],
+		type: ["horizontal", "stacked", "scaled"],
+		yValue: ["Male", "Female"],
 		xValue: "Age_Group",
 		chartWidth: 400,
 		chartHeight: 350,
@@ -33,6 +33,7 @@ function setup() {
 		barWidth: 20,
 		barColours: ["#193449", "#38586f"],
 		axisLineColour: "#282828",
+		tickIncrement: 10,
 		labelTextSize: 20,
 		labelPadding: 10,
 		labelRotation: 0,
