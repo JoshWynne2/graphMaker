@@ -4,10 +4,18 @@ class BarChart {
 		this.type = obj.type;
 		/*
 			type is an ENUM of the following combination of names as strings:
-				vertical
-				horizontal
+				vertical/horizontal
+				group/stacked
+				this.d/100%
 
-				100%
+			this is the default set:
+				["vertical", "cascade", "this.d"]
+
+			if type.includes("vertical"){
+				default
+			} else {
+				blow your head off
+			}
 
 		*/
 
@@ -41,6 +49,8 @@ class BarChart {
 
 		// increases datamax so its divisable by the tick increment
 		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
+
+		this.scale;
 
 		if (dev) {
 			this.dev = true;
@@ -115,6 +125,13 @@ class BarChart {
 		// render sliders if dev mode
 		if (this.dev) this.renderSettings();
 
+		// calculate scale;
+		if (this.type.includes("horizontal")) {
+			this.scale = this.chartWidth / this.adjDataMax;
+		} else {
+			this.scale = this.chartHeight / this.adjDataMax;
+		}
+
 		push();
 
 		// change orgin to 0,0 of the graph
@@ -138,27 +155,40 @@ class BarChart {
 	}
 
 	calculateGap() {
-		let gap =
-			(this.chartWidth - this.data.length * this.barWidth) / (this.data.length + 1);
-
-		return gap;
+		if (this.type.includes("horizontal")) {
+			return (
+				(this.chartHeight - this.data.length * this.barWidth) /
+				(this.data.length + 1)
+			);
+		}
+		// default vertical
+		return (
+			(this.chartWidth - this.data.length * this.barWidth) / (this.data.length + 1)
+		);
 	}
 
 	renderBars(gap) {
-		translate((gap + this.barWidth) / 2, 0);
+		if (this.type.includes("horizontal")) {
+			translate(0, -gap - this.barWidth);
+		} else {
+			translate((gap + this.barWidth) / 2, 0);
+		}
 
-		let scale = this.chartHeight / this.adjDataMax;
 		for (let i = 0; i < this.data.length; i++) {
-			
 			// draw bar
 			push();
 			for (let j = 0; j < this.yValue.length; j++) {
-				let barHeight = this.data[i][this.yValue[j]] * scale;
+				let barHeight = this.data[i][this.yValue[j]] * this.scale;
 
 				fill(this.barColours[j]);
 				noStroke();
-				rect(0, 0, this.barWidth, -barHeight);
-				translate(0,-barHeight);
+				if (this.type.includes("horizontal")) {
+					rect(0, 0, barHeight, this.barWidth);
+					translate(barHeight, 0);
+				} else {
+					rect(0, 0, this.barWidth, -barHeight);
+					translate(0, -barHeight);
+				}
 			}
 			pop();
 
@@ -168,51 +198,75 @@ class BarChart {
 			this.renderLabel(i);
 
 			pop();
-			translate(gap + this.barWidth, 0);
+			if (this.type.includes("horizontal")) {
+				translate(0, -gap - this.barWidth);
+			} else {
+				translate(gap + this.barWidth, 0);
+			}
 		}
 	}
 
 	renderLabel(i) {
-		translate(this.barWidth / 2, this.labelPadding);
+		if(this.type.includes("horizontal")){
+			translate(this.barWidth / 2 - this.labelPadding, this.barWidth/2);
+			textAlign(RIGHT);
+		} else {
+			translate(this.barWidth / 2, this.labelPadding);
+			textAlign(LEFT);
+		}
 
 		textSize(this.labelTextSize);
 		fill(this.labelColour);
 		noStroke();
 
-		textAlign(LEFT);
 		rotate(this.labelRotation);
 		text(this.labels[i], 0, 0);
 	}
 
 	renderTicks() {
 		let tickCount = this.adjDataMax / this.tickIncrement;
-		let tickGap = this.chartHeight / tickCount;
+		let tickGap;
+		if (this.type.includes("horizontal")) {
+			tickGap = this.chartWidth / tickCount;
+		} else {
+			tickGap = this.chartHeight / tickCount;
+		}
 
 		for (let i = 0; i <= tickCount; i++) {
 			stroke(0);
 
-			line(0, -tickGap * i, -20, -tickGap * i);
+			if (this.type.includes("horizontal")) {
+				line(tickGap * i, 0, tickGap * i, 20);
+			} else {
+				line(0, -tickGap * i, -20, -tickGap * i);
+			}
 
 			textSize(this.labelTextSize);
 			fill(this.labelColour);
 			noStroke();
-			textAlign(RIGHT, CENTER);
-			text(this.tickIncrement * i, -25, -tickGap * i);
+
+			if (this.type.includes("horizontal")) {
+				textAlign(CENTER, CENTER);
+				text(this.tickIncrement * i, tickGap * i, 25);
+			} else {
+				textAlign(RIGHT, CENTER);
+				text(this.tickIncrement * i, -25, -tickGap * i);
+			}
 		}
 	}
 
-	renderLegend(){		
+	renderLegend() {
 		// rect of the colours and their name
 		push();
 		rectMode(CENTER);
 		textAlign(LEFT, CENTER);
 		textSize(this.legendSize);
-		translate(this.chartWidth + 20,(-this.chartHeight-this.legendSize*2)/2);
+		translate(this.chartWidth + 20, (-this.chartHeight - this.legendSize * 2) / 2);
 
 		for (let i = 0; i < this.yValue.length; i++) {
 			fill(this.barColours[i]);
-			rect(0,(this.legendSize*1.5)*i,this.legendSize,this.legendSize);
-			text(this.yValue[i], this.legendSize*0.75, (this.legendSize*1.5)*i);
+			rect(0, this.legendSize * 1.5 * i, this.legendSize, this.legendSize);
+			text(this.yValue[i], this.legendSize * 0.75, this.legendSize * 1.5 * i);
 		}
 
 		pop();
