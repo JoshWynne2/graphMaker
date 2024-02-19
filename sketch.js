@@ -8,7 +8,7 @@ function preload() {
 }
 
 function setup() {
-	createCanvas(800, 800);
+	createCanvas(window.innerWidth, window.innerHeight);
 	
 	textAlign(LEFT, CENTER);
 	angleMode(DEGREES);
@@ -21,33 +21,47 @@ function setup() {
 	cleanData = data.rows.map((row) => row.obj);
 	console.log(cleanData);
 
-	let barChart01 = {
-		data: cleanData,
-		type: ["vertical", "grouped", "scaled"],
-		yValue: ["Male", "Female"],
+	let colourPallete1 = [
+		["#15232d","#ffffff","#000000","#000000"],
+		"#000000",
+		"#000000"
+	];
+
+	let excelPallete = [
+		["#5b9bd5","#70ae47","#fdcc03","#f90402"],
+		"#202020",
+		"#000000"
+	];
+
+	let roadData = {
+		data:cleanData,
 		xValue: "Age_Group",
-		chartWidth: 400,
+		yValue: ["Male", "Female"]
+	}
+
+	let barChart01 = {
+		type: ["horizontal", "stacked", "100%"],
+		chartWidth: 215,
 		chartHeight: 350,
-		xPos: 250,
-		yPos: 400,
+		xPos: 450,
+		yPos: 600,
 		barWidth: 20,
-		barColours: ["#193449", "#38586f"],
-		axisLineColour: "#282828",
 		tickIncrement: 5,
+		tickPadding: 20,
 		labelTextSize: 20,
-		labelPadding: 10,
+		labelPadding: 5,
 		labelRotation: 0,
-		labelColour: "#000000",
-		legendSize: 20,
+		legendSize: 15,
+		legendPadding: 20,
 	};
 
 	// barCharts.push(new BarChart(cleanData,80,80,50,350,"#ff0000"));
-	barCharts.push(new BarChart(barChart01, true));
+	barCharts.push(new BarChart(roadData, barChart01, excelPallete, true));
 	// barCharts.push(new BarChart(cleanData, 200, 200, 250, 450, "#d9d9d9"));
 	// barCharts.push(new BarChart(cleanData,400,400,50,450,"#d9d9d9"))
 }
 
 function draw() {
-	background(175);
+	background("#cecece");
 	barCharts.forEach((bar) => bar.render());
 }

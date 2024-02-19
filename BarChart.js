@@ -1,7 +1,17 @@
 class BarChart {
-	constructor(obj, dev = false) {
-		this.data = obj.data;
-		this.type = obj.type;
+	constructor(
+		dataIn,
+		template,
+		colourPallete = [
+			["#000000", "#000000", "#000000", "#000000"],
+			"#000000",
+			"#000000",
+		],
+		dev = false
+	) {
+		this.data = dataIn.data;
+
+		this.type = template.type;
 		/*
 			type is an ENUM of the following combination of names as strings:
 				vertical/horizontal
@@ -18,26 +28,28 @@ class BarChart {
 			}
 		*/
 
-		this.yValue = obj.yValue;
+		this.yValue = dataIn.yValue;
 		// yValue is an array containing the names of each datapoint in the row
+		this.xValue = dataIn.xValue;
 
-		this.xValue = obj.xValue;
+		this.chartWidth = template.chartWidth;
+		this.chartHeight = template.chartHeight;
+		this.xPos = template.xPos;
+		this.yPos = template.yPos;
 
-		this.chartWidth = obj.chartWidth;
-		this.chartHeight = obj.chartHeight;
-		this.xPos = obj.xPos;
-		this.yPos = obj.yPos;
-		this.axisLineColour = obj.axisLineColour;
-		this.barWidth = obj.barWidth;
-		this.barColours = obj.barColours;
+		this.barWidth = template.barWidth;
+		this.barColours = colourPallete[0];
+		this.axisLineColour = colourPallete[1];
 
-		this.labelTextSize = obj.labelTextSize;
-		this.labelPadding = obj.labelPadding;
-		this.labelRotation = obj.labelRotation;
-		this.labelColour = obj.labelColour;
+		this.labelColour = colourPallete[2];
+		this.labelTextSize = template.labelTextSize;
+		this.labelPadding = template.labelPadding;
+		this.labelRotation = template.labelRotation;
 
-		this.tickIncrement = obj.tickIncrement;
-		this.legendSize = obj.legendSize;
+		this.tickIncrement = template.tickIncrement;
+		this.legendSize = template.legendSize;
+		this.legendPadding = template.legendPadding;
+		this.tickPadding = template.tickPadding;
 
 		this.labels = this.data.map((d) => d[this.xValue]);
 
@@ -68,45 +80,67 @@ class BarChart {
 		if (dev) {
 			this.dev = true;
 
+			this.type1Select = createSelect();
+			this.type1Select.position(10, 50);
+			this.type1Select.option("vertical");
+			this.type1Select.option("horizontal");
+			this.type2Select = createSelect();
+			this.type2Select.position(110, 50);
+			this.type2Select.option("stacked");
+			this.type2Select.option("grouped");
+			this.type3Select = createSelect();
+			this.type3Select.position(210, 50);
+			this.type3Select.option("scaled");
+			this.type3Select.option("100%");
+
 			this.chartWidthSlider = createSlider(150, 600, this.chartWidth, 1);
-			this.chartWidthSlider.position(10, 50);
+			this.chartWidthSlider.position(10, 100);
 			this.chartHeightSlider = createSlider(150, 600, this.chartHeight, 1);
-			this.chartHeightSlider.position(10, 100);
+			this.chartHeightSlider.position(10, 150);
 
 			this.xPosSlider = createSlider(0, width, this.xPos, 1);
-			this.xPosSlider.position(10, 150);
+			this.xPosSlider.position(10, 200);
 			this.yPosSlider = createSlider(0, height, this.yPos, 1);
-			this.yPosSlider.position(10, 200);
+			this.yPosSlider.position(10, 250);
 
 			this.barWidthSlider = createSlider(10, 100, this.barWidth, 1);
-			this.barWidthSlider.position(10, 250);
+			this.barWidthSlider.position(10, 300);
 
+			this.tickIncrementSlider = createSlider(1, 25, this.tickIncrement, 1);
+			this.tickIncrementSlider.position(10, 350);
+			this.tickPaddingSlider = createSlider(0, 50, this.tickPadding, 1);
+			this.tickPaddingSlider.position(10, 400);
+
+			this.legendSizeSlider = createSlider(10, 100, this.legendSize, 1);
+			this.legendSizeSlider.position(10, 450);
+			this.legendPaddingSlider = createSlider(10, 100, this.legendPadding, 1);
+			this.legendPaddingSlider.position(10, 500);
+			
 			this.labelTextSizeSlider = createSlider(10, 50, this.labelTextSize, 1);
-			this.labelTextSizeSlider.position(10, 300);
+			this.labelTextSizeSlider.position(10, 550);
 			this.labelPaddingSlider = createSlider(0, 50, this.labelPadding, 1);
-			this.labelPaddingSlider.position(10, 350);
+			this.labelPaddingSlider.position(10, 600);
 			this.labelRotationSlider = createSlider(0, 360, this.labelRotation, 1);
-			this.labelRotationSlider.position(10, 400);
+			this.labelRotationSlider.position(10, 650);
 
 			this.downloadButton = createButton("download template");
-			this.downloadButton.position(20, 450);
+			this.downloadButton.position(20, 800);
 			this.downloadButton.mousePressed(() => {
 				let save = {
-					data: "replace",
-					horizontal: this.horizontal,
-					yValue: this.yValue,
-					xValue: this.xValue,
+					type: this.type,
 					chartWidth: this.chartWidth,
 					chartHeight: this.chartHeight,
 					xPos: this.xPos,
 					yPos: this.yPos,
-					axisLineColour: "replace",
 					barWidth: this.barWidth,
-					barColour: "replace",
+					tickIncrement: this.tickIncrement,
+					tickPadding: this.tickPadding,
+					labelPadding: this.labelPadding,
 					labelTextSize: this.labelTextSize,
 					labelPadding: this.labelPadding,
 					labelRotation: this.labelRotation,
-					labelColour: "replace",
+					legendSize: this.legendSize,
+					legendPadding: this.legendPadding,
 				};
 
 				var element = document.createElement("a");
@@ -150,6 +184,8 @@ class BarChart {
 		// change orgin to 0,0 of the graph
 		translate(this.xPos, this.yPos);
 
+		this.renderBars(this.gap);
+
 		// draw axis lines
 		stroke(this.axisLineColour);
 		line(0, 0, 0, -this.chartHeight);
@@ -157,10 +193,6 @@ class BarChart {
 
 		//calculate gap
 		this.gap = this.calculateGap();
-
-		push();
-		this.renderBars(this.gap);
-		pop();
 
 		this.renderTicks();
 		this.renderLegend();
@@ -199,25 +231,33 @@ class BarChart {
 	}
 
 	renderBars(gap) {
-		// first gap
-		if (this.type.includes("grouped")) {
-			if (this.type.includes("horizontal")) {
-				translate(
-					0,
-					(-gap - this.barWidth * this.yValue.length) / 2 - this.barWidth
-				);
-			} else {
-				translate((gap + this.barWidth * this.yValue.length) / 2, 0);
-			}
-		} else {
-			if (this.type.includes("horizontal")) {
-				translate(0, (-gap - this.barWidth) / 2);
-			} else {
-				translate((gap + this.barWidth) / 2, 0);
-			}
-		}
+		push();
+
 		// loop on rows
 		for (let i = 0; i < this.data.length; i++) {
+			// make gap
+			if (this.type.includes("grouped")) {
+				if (this.type.includes("horizontal")) {
+					translate(0, -gap - this.barWidth * this.yValue.length);
+				} else {
+					if (i != 0) {
+						translate(this.barWidth * this.yValue.length + gap, 0);
+					} else {
+						translate(gap, 0);
+					}
+				}
+			} else {
+				if (this.type.includes("horizontal")) {
+					translate(0, -gap - this.barWidth);
+				} else {
+					if (i != 0) {
+						translate(this.barWidth + gap, 0);
+					} else {
+						translate(gap, 0);
+					}
+				}
+			}
+
 			// draw bar
 			push();
 
@@ -236,8 +276,13 @@ class BarChart {
 				let barHeight = this.data[i][this.yValue[j]] * this.scale;
 
 				if (this.type.includes("100%")) {
-					barHeight =
-						(this.data[i][this.yValue[j]] / barMax) * 100 * this.scale;
+					if (this.type.includes("horizontal")) {
+						barHeight =
+							(this.data[i][this.yValue[j]] / barMax) * this.chartWidth;
+					} else {
+						barHeight =
+							(this.data[i][this.yValue[j]] / barMax) * this.chartHeight;
+					}
 				}
 
 				fill(this.barColours[j]);
@@ -270,31 +315,14 @@ class BarChart {
 			this.renderLabel(i);
 
 			pop();
-
-			// move for next category
-			if (this.type.includes("grouped")) {
-				if (this.type.includes("horizontal")) {
-					translate(0, -gap - this.barWidth * this.yValue.length);
-				} else {
-					translate(gap + this.barWidth * this.yValue.length, 0);
-				}
-			} else {
-				if (this.type.includes("horizontal")) {
-					translate(0, -gap - this.barWidth);
-				} else {
-					translate(gap + this.barWidth, 0);
-				}
-			}
 		}
+		pop();
 	}
 
 	renderLabel(i) {
 		if (this.type.includes("grouped")) {
 			if (this.type.includes("horizontal")) {
-				translate(
-					(this.barWidth * this.yValue.length) / 2 - this.labelPadding,
-					(this.barWidth * this.yValue.length) / 2
-				);
+				translate(-this.labelPadding, (this.barWidth * this.yValue.length) / 2);
 				textAlign(RIGHT);
 			} else {
 				translate((this.barWidth * this.yValue.length) / 2, this.labelPadding);
@@ -302,7 +330,7 @@ class BarChart {
 			}
 		} else {
 			if (this.type.includes("horizontal")) {
-				translate(this.barWidth / 2 - this.labelPadding, this.barWidth / 2);
+				translate(-this.labelPadding, this.barWidth / 2);
 				textAlign(RIGHT);
 			} else {
 				translate(this.barWidth / 2, this.labelPadding);
@@ -320,6 +348,11 @@ class BarChart {
 
 	renderTicks() {
 		let tickCount = this.adjDataMax / this.tickIncrement;
+
+		if (this.type.includes("100%")) {
+			tickCount = 100 / this.tickIncrement;
+		}
+
 		let tickGap;
 		if (this.type.includes("horizontal")) {
 			tickGap = this.chartWidth / tickCount;
@@ -331,9 +364,9 @@ class BarChart {
 			stroke(0);
 
 			if (this.type.includes("horizontal")) {
-				line(tickGap * i, 0, tickGap * i, 20);
+				line(tickGap * i, 0, tickGap * i, this.tickPadding);
 			} else {
-				line(0, -tickGap * i, -20, -tickGap * i);
+				line(0, -tickGap * i, -this.tickPadding, -tickGap * i);
 			}
 
 			textSize(this.labelTextSize);
@@ -342,10 +375,10 @@ class BarChart {
 
 			if (this.type.includes("horizontal")) {
 				textAlign(CENTER, CENTER);
-				text(this.tickIncrement * i, tickGap * i, 25);
+				text(this.tickIncrement * i, tickGap * i, this.tickPadding * 1.5);
 			} else {
 				textAlign(RIGHT, CENTER);
-				text(this.tickIncrement * i, -25, -tickGap * i);
+				text(this.tickIncrement * i, -this.tickPadding * 1.5, -tickGap * i);
 			}
 		}
 	}
@@ -356,7 +389,10 @@ class BarChart {
 		rectMode(CENTER);
 		textAlign(LEFT, CENTER);
 		textSize(this.legendSize);
-		translate(this.chartWidth + 20, (-this.chartHeight - this.legendSize * 2) / 2);
+		translate(
+			this.chartWidth + this.legendPadding,
+			(-this.chartHeight - this.legendSize * 2) / 2
+		);
 
 		for (let i = 0; i < this.yValue.length; i++) {
 			fill(this.barColours[i]);
@@ -370,28 +406,61 @@ class BarChart {
 	renderSettings() {
 		textSize(20);
 
+		if (this.type.includes("grouped")) {
+			this.dataMax = max(this.dataMaxs);
+		} else {
+			// sum of everything in the array, there are some cases i can see this being bad?
+			this.dataMax = this.dataMaxs.reduce((e, x) => e + x, 0);
+		}
+
+		// increases datamax so its divisable by the tick increment
+		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
+
+		if (this.type.includes("100%")) {
+			this.adjDataMax = 100;
+		}
+
+		this.type = [
+			this.type1Select.value(),
+			this.type2Select.value(),
+			this.type3Select.value(),
+		];
+		text("Type ", 20, 30);
+
 		this.chartWidth = this.chartWidthSlider.value();
-		text("width: " + this.chartWidth, 20, 40);
+		text("Width: " + this.chartWidth, 20, 90);
 
 		this.chartHeight = this.chartHeightSlider.value();
-		text("height: " + this.chartHeight, 20, 90);
+		text("Height: " + this.chartHeight, 20, 140);
 
 		this.xPos = this.xPosSlider.value();
-		text("x pos: " + this.xPos, 20, 140);
+		text("xPos: " + this.xPos, 20, 190);
 
 		this.yPos = this.yPosSlider.value();
-		text("y pos: " + this.yPos, 20, 190);
+		text("yPos: " + this.yPos, 20, 240);
 
 		this.barWidth = this.barWidthSlider.value();
-		text("bar width: " + this.barWidth, 20, 240);
+		text("Bar width: " + this.barWidth, 20, 290);
+
+		this.tickIncrement = this.tickIncrementSlider.value();
+		text("Tick Increment: " + this.tickIncrement, 20, 340);
+
+		this.tickPadding = this.tickPaddingSlider.value();
+		text("Tick Padding: " + this.tickPadding, 20, 390);
+
+		this.legendSize = this.legendSizeSlider.value();
+		text("Legend size: " + this.legendSize, 20, 440);
+		
+		this.legendPadding = this.legendPaddingSlider.value();
+		text("Legend padding: " + this.legendPadding, 20, 490);
 
 		this.labelTextSize = this.labelTextSizeSlider.value();
-		text("label size: " + this.labelTextSize, 20, 290);
+		text("label size: " + this.labelTextSize, 20, 540);
 
 		this.labelPadding = this.labelPaddingSlider.value();
-		text("label padding: " + this.labelPadding, 20, 340);
+		text("label padding: " + this.labelPadding, 20, 590);
 
 		this.labelRotation = this.labelRotationSlider.value();
-		text("label rotation: " + this.labelRotation, 20, 390);
+		text("label rotation: " + this.labelRotation, 20, 640);
 	}
 }
