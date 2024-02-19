@@ -12,6 +12,8 @@ class BarChart {
 		*/
 
 		this.yValue = obj.yValue;
+		// yValue is an array containing the names of each datapoint in the row
+
 		this.xValue = obj.xValue;
 
 		this.chartWidth = obj.chartWidth;
@@ -20,7 +22,7 @@ class BarChart {
 		this.yPos = obj.yPos;
 		this.axisLineColour = obj.axisLineColour;
 		this.barWidth = obj.barWidth;
-		this.barColour = obj.barColour;
+		this.barColours = obj.barColours;
 
 		this.labelTextSize = obj.labelTextSize;
 		this.labelPadding = obj.labelPadding;
@@ -28,9 +30,14 @@ class BarChart {
 		this.labelColour = obj.labelColour;
 
 		this.tickIncrement = 5;
+		this.legendSize = obj.legendSize;
 
 		this.labels = this.data.map((d) => d[this.xValue]);
-		this.dataMax = max(this.data.map((row) => +row[this.yValue]));
+
+		this.dataMax = 0;
+		for (let i = 0; i < this.yValue.length; i++) {
+			this.dataMax += max(this.data.map((row) => +row[this.yValue[i]]));
+		}
 
 		// increases datamax so its divisable by the tick increment
 		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
@@ -97,8 +104,8 @@ class BarChart {
 		}
 	}
 
-	calcAdjDataMax(max, inc){
-		while(max % inc != 0){
+	calcAdjDataMax(max, inc) {
+		while (max % inc != 0) {
 			max++;
 		}
 		return max;
@@ -107,7 +114,6 @@ class BarChart {
 	render() {
 		// render sliders if dev mode
 		if (this.dev) this.renderSettings();
-
 
 		push();
 
@@ -127,6 +133,7 @@ class BarChart {
 		pop();
 
 		this.renderTicks();
+		this.renderLegend();
 		pop();
 	}
 
@@ -142,12 +149,18 @@ class BarChart {
 
 		let scale = this.chartHeight / this.adjDataMax;
 		for (let i = 0; i < this.data.length; i++) {
-
-			let barHeight = this.data[i][this.yValue] * scale;
-
+			
 			// draw bar
-			fill(this.barColour);
-			rect(0, 0, this.barWidth, -barHeight);
+			push();
+			for (let j = 0; j < this.yValue.length; j++) {
+				let barHeight = this.data[i][this.yValue[j]] * scale;
+
+				fill(this.barColours[j]);
+				noStroke();
+				rect(0, 0, this.barWidth, -barHeight);
+				translate(0,-barHeight);
+			}
+			pop();
 
 			// draw label
 			push();
@@ -172,7 +185,7 @@ class BarChart {
 	}
 
 	renderTicks() {
-		let tickCount = this.adjDataMax / this.tickIncrement
+		let tickCount = this.adjDataMax / this.tickIncrement;
 		let tickGap = this.chartHeight / tickCount;
 
 		for (let i = 0; i <= tickCount; i++) {
@@ -184,8 +197,25 @@ class BarChart {
 			fill(this.labelColour);
 			noStroke();
 			textAlign(RIGHT, CENTER);
-			text((this.tickIncrement * i), -25, -tickGap * i);
+			text(this.tickIncrement * i, -25, -tickGap * i);
 		}
+	}
+
+	renderLegend(){		
+		// rect of the colours and their name
+		push();
+		rectMode(CENTER);
+		textAlign(LEFT, CENTER);
+		textSize(this.legendSize);
+		translate(this.chartWidth + 20,(-this.chartHeight-this.legendSize*2)/2);
+
+		for (let i = 0; i < this.yValue.length; i++) {
+			fill(this.barColours[i]);
+			rect(0,(this.legendSize*1.5)*i,this.legendSize,this.legendSize);
+			text(this.yValue[i], this.legendSize*0.75, (this.legendSize*1.5)*i);
+		}
+
+		pop();
 	}
 
 	renderSettings() {

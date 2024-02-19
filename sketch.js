@@ -24,19 +24,20 @@ function setup() {
 	let barChart01 = {
 		data: cleanData,
 		horizontal: false,
-		yValue: "Total",
+		yValue: ["Male", "Female"],
 		xValue: "Age_Group",
 		chartWidth: 400,
 		chartHeight: 350,
-		xPos: 350,
+		xPos: 250,
 		yPos: 400,
 		barWidth: 20,
-		barColour: "#000000",
-		axisLineColour: "#0000ff",
+		barColours: ["#193449", "#38586f"],
+		axisLineColour: "#282828",
 		labelTextSize: 20,
 		labelPadding: 10,
 		labelRotation: 90,
 		labelColour: "#000000",
+		legendSize: 20,
 	};
 
 	// barCharts.push(new BarChart(cleanData,80,80,50,350,"#ff0000"));
