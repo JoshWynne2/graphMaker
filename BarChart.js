@@ -1,14 +1,5 @@
 class BarChart {
-	constructor(
-		dataIn,
-		template,
-		colourPallete = [
-			["#000000", "#000000", "#000000", "#000000"],
-			"#000000",
-			"#000000",
-		],
-		dev = false
-	) {
+	constructor(dataIn, template, colourPallete, dev = false) {
 		this.data = dataIn.data;
 
 		this.type = template.type;
@@ -52,6 +43,7 @@ class BarChart {
 		this.tickPadding = template.tickPadding;
 
 		this.labels = this.data.map((d) => d[this.xValue]);
+		console.log(this.labels);
 
 		this.dataMax = 0;
 		this.dataMaxs = [];
@@ -115,7 +107,7 @@ class BarChart {
 			this.legendSizeSlider.position(10, 450);
 			this.legendPaddingSlider = createSlider(10, 100, this.legendPadding, 1);
 			this.legendPaddingSlider.position(10, 500);
-			
+
 			this.labelTextSizeSlider = createSlider(10, 50, this.labelTextSize, 1);
 			this.labelTextSizeSlider.position(10, 550);
 			this.labelPaddingSlider = createSlider(0, 50, this.labelPadding, 1);
@@ -162,6 +154,8 @@ class BarChart {
 	}
 
 	calcAdjDataMax(max, inc) {
+		max = Math.ceil(max);
+		
 		while (max % inc != 0) {
 			max++;
 		}
@@ -450,7 +444,7 @@ class BarChart {
 
 		this.legendSize = this.legendSizeSlider.value();
 		text("Legend size: " + this.legendSize, 20, 440);
-		
+
 		this.legendPadding = this.legendPaddingSlider.value();
 		text("Legend padding: " + this.legendPadding, 20, 490);
 

@@ -1,0 +1,5 @@
+﻿STAT,LABEL,YEAR,All Enterprises,Small (10 to 49),Medium (50 to 249),Large (250 or more)
+ICA230C01,Broadband speed 100 Mbps or less,2023,28.3,30.1,20.4,16.5
+ICA230C01,Broadband speed 100 to 500 Mbps,2023,29.4,29.2,30,31.9
+ICA230C01,Broadband speed 500 Mbps or more,2023,30.8,28.1,41.8,48.5
+ICA230C01,No fixed broadband,2023,11.6,12.6,7.8,3.1
