@@ -1,6 +1,10 @@
 class BarChart {
 	constructor(dataIn, template, colourPallete, dev = false) {
 		this.data = dataIn.data;
+		
+		this.title = dataIn.title;
+		this.titleSize = template.titleSize;
+		this.titlePadding = template.titlePadding;
 
 		this.type = template.type;
 		/*
@@ -45,19 +49,32 @@ class BarChart {
 		this.labels = this.data.map((d) => d[this.xValue]);
 		console.log(this.labels);
 
+		this.gap = 0;
+
 		this.dataMax = 0;
 		this.dataMaxs = [];
 
-		this.gap = 0;
-		for (let i = 0; i < this.yValue.length; i++) {
-			this.dataMaxs.push(max(this.data.map((row) => +row[this.yValue[i]])));
-		}
 
 		if (this.type.includes("grouped")) {
+				
+			// adds the max value of each column to datamaxs array
+			for (let i = 0; i < this.yValue.length; i++) {
+				this.dataMaxs.push(max(this.data.map((row) => +row[this.yValue[i]])));
+			}
+			// if its grouped you only need the highest already set in
 			this.dataMax = max(this.dataMaxs);
 		} else {
-			// sum of everything in the array, there are some cases i can see this being bad?
-			this.dataMax = this.dataMaxs.reduce((e, x) => e + x, 0);
+			// the array will only have as many entries as yvalues being passed in
+			// add the max number of each column together
+			for (let i = 0; i < this.data.length; i++) {
+				let total = 0;
+				for (let j = 0; j < this.yValue.length; j++) {
+					total += this.data[i][this.yValue[j]];
+				}
+				this.dataMaxs.push(total);
+			}
+
+			this.dataMax = max(this.dataMaxs);
 		}
 
 		// increases datamax so its divisable by the tick increment
@@ -115,11 +132,18 @@ class BarChart {
 			this.labelRotationSlider = createSlider(0, 360, this.labelRotation, 1);
 			this.labelRotationSlider.position(10, 650);
 
+			this.titleSizeSlider = createSlider(0, 100, this.titleSize, 1);
+			this.titleSizeSlider.position(10, 700);
+			this.titlePaddingSlider = createSlider(0, 50, this.titlePadding, 1);
+			this.titlePaddingSlider.position(10, 750);
+
 			this.downloadButton = createButton("download template");
 			this.downloadButton.position(20, 800);
 			this.downloadButton.mousePressed(() => {
 				let save = {
 					type: this.type,
+					titlePadding: this.titlePadding,
+					titleSize: this.titleSize,
 					chartWidth: this.chartWidth,
 					chartHeight: this.chartHeight,
 					xPos: this.xPos,
@@ -190,6 +214,7 @@ class BarChart {
 
 		this.renderTicks();
 		this.renderLegend();
+		this.renderTitle();
 		pop();
 	}
 
@@ -279,7 +304,9 @@ class BarChart {
 					}
 				}
 
-				fill(this.barColours[j]);
+				fill(this.barColours[j % this.barColours.length]);
+				// moding I makes the program will no longer die if I have more yValues than colours
+
 				noStroke();
 
 				// draw rectangle and move for stacked/group
@@ -397,6 +424,15 @@ class BarChart {
 		pop();
 	}
 
+	renderTitle(){
+		push();
+		translate(this.chartWidth/2, -this.chartHeight);
+		textAlign(CENTER);
+		textSize(this.titleSize);
+		text(this.title, 0,-this.titlePadding);
+		pop();
+	}
+
 	renderSettings() {
 		textSize(20);
 
@@ -456,5 +492,11 @@ class BarChart {
 
 		this.labelRotation = this.labelRotationSlider.value();
 		text("label rotation: " + this.labelRotation, 20, 640);
+		
+		this.titleSize = this.titleSizeSlider.value();
+		text("Title size: " + this.titleSize, 20, 690);
+		
+		this.titlePadding = this.titlePaddingSlider.value();
+		text("Title padding: " + this.titlePadding, 20, 740);
 	}
 }
