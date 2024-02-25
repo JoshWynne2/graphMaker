@@ -1,7 +1,7 @@
 class BarChart {
 	constructor(dataIn, template, colourPallete, dev = false) {
 		this.data = dataIn.data;
-		
+
 		this.title = dataIn.title;
 		this.titleSize = template.titleSize;
 		this.titlePadding = template.titlePadding;
@@ -53,32 +53,9 @@ class BarChart {
 
 		this.dataMax = 0;
 		this.dataMaxs = [];
+		this.adjDataMax = 0;
 
-
-		if (this.type.includes("grouped")) {
-				
-			// adds the max value of each column to datamaxs array
-			for (let i = 0; i < this.yValue.length; i++) {
-				this.dataMaxs.push(max(this.data.map((row) => +row[this.yValue[i]])));
-			}
-			// if its grouped you only need the highest already set in
-			this.dataMax = max(this.dataMaxs);
-		} else {
-			// the array will only have as many entries as yvalues being passed in
-			// add the max number of each column together
-			for (let i = 0; i < this.data.length; i++) {
-				let total = 0;
-				for (let j = 0; j < this.yValue.length; j++) {
-					total += this.data[i][this.yValue[j]];
-				}
-				this.dataMaxs.push(total);
-			}
-
-			this.dataMax = max(this.dataMaxs);
-		}
-
-		// increases datamax so its divisable by the tick increment
-		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
+		this.calculateDataMax();
 
 		this.scale;
 
@@ -177,11 +154,40 @@ class BarChart {
 		}
 	}
 
+	calculateDataMax() {
+		if (this.type.includes("grouped")) {
+			// adds the max value of each column to datamaxs array
+			for (let i = 0; i < this.yValue.length; i++) {
+				this.dataMaxs.push(max(this.data.map((row) => +row[this.yValue[i]])));
+			}
+			// if its grouped you only need the highest already set in
+			this.dataMax = max(this.dataMaxs);
+		} else {
+			// the array will only have as many entries as yvalues being passed in
+			// add the max number of each column together
+			for (let i = 0; i < this.data.length; i++) {
+				let total = 0;
+				for (let j = 0; j < this.yValue.length; j++) {
+					total += +this.data[i][this.yValue[j]];
+				}
+				this.dataMaxs.push(total);
+			}
+
+			this.dataMax = max(this.dataMaxs);
+		}
+		// increases datamax so its divisable by the tick increment
+		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
+	}
+
 	calcAdjDataMax(max, inc) {
 		max = Math.ceil(max);
-		
+		let breaker = 0;
 		while (max % inc != 0) {
 			max++;
+			breaker++;
+			if (breaker < inc) {
+				break;
+			}
 		}
 		return max;
 	}
@@ -202,7 +208,11 @@ class BarChart {
 		// change orgin to 0,0 of the graph
 		translate(this.xPos, this.yPos);
 
-		this.renderBars(this.gap);
+		if(this.type.includes("line")){
+			this.renderLines();
+		} else {
+			this.renderBars(this.gap);
+		}
 
 		// draw axis lines
 		stroke(this.axisLineColour);
@@ -289,6 +299,8 @@ class BarChart {
 				}
 			}
 
+			noStroke();
+
 			// loop on values
 			for (let j = 0; j < this.yValue.length; j++) {
 				// calculate barheight
@@ -307,10 +319,8 @@ class BarChart {
 				fill(this.barColours[j % this.barColours.length]);
 				// moding I makes the program will no longer die if I have more yValues than colours
 
-				noStroke();
-
-				// draw rectangle and move for stacked/group
 				if (this.type.includes("grouped")) {
+					// draw rectangle and move for stacked/group
 					if (this.type.includes("horizontal")) {
 						rect(0, 0, barHeight, this.barWidth);
 						translate(0, this.barWidth);
@@ -328,6 +338,7 @@ class BarChart {
 					}
 				}
 			}
+
 			pop();
 
 			push();
@@ -338,6 +349,27 @@ class BarChart {
 			pop();
 		}
 		pop();
+	}
+
+	renderLines(){
+		fill(this.barColours[0]);
+		beginShape();
+		vertex(0,0);
+		push()
+		for (let i = 0; i < this.data.length; i++) {
+			for (let j = 0; j < this.yValue.length; j++) {
+				let barHeight = this.data[i][this.yValue[j]] * this.scale;
+				vertex((this.gap + this.barWidth)*i, -barHeight);
+			}
+			push();
+			translate(-(this.gap + this.barWidth)/2,0);
+			this.renderLabel(i);
+			pop();
+			translate(this.gap + this.barWidth,0);
+		}
+		pop();
+		vertex((this.data.length-1) *(this.gap+this.barWidth), 0);
+		endShape(CLOSE);
 	}
 
 	renderLabel(i) {
@@ -410,38 +442,39 @@ class BarChart {
 		rectMode(CENTER);
 		textAlign(LEFT, CENTER);
 		textSize(this.legendSize);
-		translate(
-			this.chartWidth + this.legendPadding,
-			(-this.chartHeight - this.legendSize * 2) / 2
-		);
+		noStroke();
+		translate(this.chartWidth + this.legendPadding, -this.chartHeight / 2);
 
 		for (let i = 0; i < this.yValue.length; i++) {
-			fill(this.barColours[i]);
-			rect(0, this.legendSize * 1.5 * i, this.legendSize, this.legendSize);
-			text(this.yValue[i], this.legendSize * 0.75, this.legendSize * 1.5 * i);
+			let middleI = map(
+				i,
+				0,
+				this.yValue.length,
+				-(this.yValue.length / 2),
+				this.yValue.length / 2
+			);
+
+			fill(this.barColours[i % this.barColours.length]);
+			rect(0, this.legendSize * 1.5 * middleI, this.legendSize, this.legendSize);
+			text(this.yValue[i], this.legendSize * 0.75, this.legendSize * 1.5 * middleI);
 		}
 
 		pop();
 	}
 
-	renderTitle(){
+	renderTitle() {
 		push();
-		translate(this.chartWidth/2, -this.chartHeight);
+		translate(this.chartWidth / 2, -this.chartHeight);
 		textAlign(CENTER);
 		textSize(this.titleSize);
-		text(this.title, 0,-this.titlePadding);
+		text(this.title, 0, -this.titlePadding);
 		pop();
 	}
 
 	renderSettings() {
 		textSize(20);
 
-		if (this.type.includes("grouped")) {
-			this.dataMax = max(this.dataMaxs);
-		} else {
-			// sum of everything in the array, there are some cases i can see this being bad?
-			this.dataMax = this.dataMaxs.reduce((e, x) => e + x, 0);
-		}
+		this.calculateDataMax();
 
 		// increases datamax so its divisable by the tick increment
 		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
@@ -492,10 +525,10 @@ class BarChart {
 
 		this.labelRotation = this.labelRotationSlider.value();
 		text("label rotation: " + this.labelRotation, 20, 640);
-		
+
 		this.titleSize = this.titleSizeSlider.value();
 		text("Title size: " + this.titleSize, 20, 690);
-		
+
 		this.titlePadding = this.titlePaddingSlider.value();
 		text("Title padding: " + this.titlePadding, 20, 740);
 	}
