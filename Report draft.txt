@@ -1,0 +1,15 @@
+5 cool things I did in my graph maker
+
+1. Sliders
+Because I dont like guessing and checking making adjustments to anything I've implemented a dev mode you can enable for one chart at a time and get several sliders that control everything that you would want to and then you can download those settings you made as a json file, I copy those files and asign them as object literals in setup. 
+
+2. Adjusted Data Max Calculation 
+This little function is very neat - it increments the datamax until its divisable by the given tick increment and then returns the new value. Because I didnt want to hand in the number of ticks but rather the amount they would increment by it makes the tick rendering function more simple.
+
+3. Chart Types
+Because all of my chart types are in one class - each type only has 3-10 lines of code that would flip on or off (and some share the same lines) and you can mix types to have a vertical scaled grouped chart or a horizontal 100% stacked chart; my types are stored as strings in an array so its very easy for me to add another type on there without having to change everything, you also dont need to pass any types in and by default it would go vertical scaled stacked.
+
+4. Colour Pallete & Data inputs
+I encounted an issue when making my dev mode sliders that it didnt like saving the hexcode values in the same object so I seperated that and the data out (because downloading the template with the data would save it as object format which was redundent) which also allowed me to clasify the chart files you download as templates. The colour pallete itself is an array of hexcodes that will loop over itself when filling different yValue categories
+
+5. 

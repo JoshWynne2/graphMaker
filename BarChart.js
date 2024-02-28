@@ -12,6 +12,7 @@ class BarChart {
 				vertical/horizontal
 				group/stacked
 				scaled/100%
+				line 
 
 			this is the default set:
 				["vertical", "stacked", "scaled"]
@@ -20,6 +21,7 @@ class BarChart {
 				default
 			} else {
 				blow your head off
+					- John
 			}
 		*/
 
@@ -47,15 +49,11 @@ class BarChart {
 		this.tickPadding = template.tickPadding;
 
 		this.labels = this.data.map((d) => d[this.xValue]);
-		console.log(this.labels);
+		// console.log(this.data);
 
 		this.gap = 0;
 
-		this.dataMax = 0;
-		this.dataMaxs = [];
-		this.adjDataMax = 0;
-
-		this.calculateDataMax();
+		this.adjDataMax = this.calculateDataMax();
 
 		this.scale;
 
@@ -147,7 +145,7 @@ class BarChart {
 				document.body.appendChild(element);
 
 				element.click();
-				console.log(JSON.stringify(save));
+				// console.log(JSON.stringify(save));
 
 				document.body.removeChild(element);
 			});
@@ -155,6 +153,9 @@ class BarChart {
 	}
 
 	calculateDataMax() {
+		this.dataMax = 0;
+		this.dataMaxs = [];
+
 		if (this.type.includes("grouped")) {
 			// adds the max value of each column to datamaxs array
 			for (let i = 0; i < this.yValue.length; i++) {
@@ -176,16 +177,16 @@ class BarChart {
 			this.dataMax = max(this.dataMaxs);
 		}
 		// increases datamax so its divisable by the tick increment
-		this.adjDataMax = this.calcAdjDataMax(this.dataMax, this.tickIncrement);
+		return this.calcAdjDataMax(this.dataMax, this.tickIncrement);
 	}
 
 	calcAdjDataMax(max, inc) {
-		max = Math.ceil(max);
-		let breaker = 0;
-		while (max % inc != 0) {
-			max++;
-			breaker++;
-			if (breaker < inc) {
+		max = Math.ceil(max); //removes decimal point
+		for (let i = 0; i < inc; i++) {
+			// if this loop runs more than increment amount of times then its a bad increment anyway
+			if(max % inc !=0){
+				max++;
+			} else {
 				break;
 			}
 		}
@@ -203,6 +204,9 @@ class BarChart {
 			this.scale = this.chartHeight / this.adjDataMax;
 		}
 
+		//calculate gap
+		this.gap = this.calculateGap();
+
 		push();
 
 		// change orgin to 0,0 of the graph
@@ -218,9 +222,6 @@ class BarChart {
 		stroke(this.axisLineColour);
 		line(0, 0, 0, -this.chartHeight);
 		line(0, 0, this.chartWidth, 0);
-
-		//calculate gap
-		this.gap = this.calculateGap();
 
 		this.renderTicks();
 		this.renderLegend();
@@ -319,8 +320,8 @@ class BarChart {
 				fill(this.barColours[j % this.barColours.length]);
 				// moding I makes the program will no longer die if I have more yValues than colours
 
+				// draw rectangle and move for stacked/group
 				if (this.type.includes("grouped")) {
-					// draw rectangle and move for stacked/group
 					if (this.type.includes("horizontal")) {
 						rect(0, 0, barHeight, this.barWidth);
 						translate(0, this.barWidth);
@@ -328,7 +329,7 @@ class BarChart {
 						rect(0, 0, this.barWidth, -barHeight);
 						translate(this.barWidth, 0);
 					}
-				} else {
+				} else { // stacked
 					if (this.type.includes("horizontal")) {
 						rect(0, 0, barHeight, this.barWidth);
 						translate(barHeight, 0);
@@ -401,7 +402,6 @@ class BarChart {
 
 	renderTicks() {
 		let tickCount = this.adjDataMax / this.tickIncrement;
-
 		if (this.type.includes("100%")) {
 			tickCount = 100 / this.tickIncrement;
 		}
