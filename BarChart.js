@@ -356,7 +356,7 @@ class BarChart {
 		fill(this.barColours[0]);
 		beginShape();
 		vertex(0,0);
-		push()
+		push();
 		for (let i = 0; i < this.data.length; i++) {
 			for (let j = 0; j < this.yValue.length; j++) {
 				let barHeight = this.data[i][this.yValue[j]] * this.scale;
